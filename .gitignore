@@ -1,0 +1,6 @@
+SDL2_net-2.0.1/
+.vscode/
+SDL2-2.0.8/
+OthheloServer/OthheloServer.vcxproj.filters
+OthheloServer/OthheloServer.vcxproj.user
+OthheloServer/x64/
