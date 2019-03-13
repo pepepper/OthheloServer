@@ -5,3 +5,5 @@ OthheloServer.vcxproj.filters
 OthheloServer.vcxproj.user
 OthheloServer/x64/
 x64/
+.vs/
+Debug/
