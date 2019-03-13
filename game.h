@@ -14,7 +14,6 @@ class Game{
 	~Game();
 	void login(SOCKET *sock);
 	void login(SOCKET *sock, std::string pass);
-	void setPassword(std::string pass);
 	void readyGame();
 	int islocked,ended;
 	std::string room;
