@@ -1,7 +1,10 @@
 #ifdef Linux_System
+typedef int SOCKET;
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <unistd.h>
+#include <string.h>
 
 #else
 #include <winsock2.h>

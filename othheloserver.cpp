@@ -15,20 +15,13 @@ othheloserver::othheloserver():connected(0), end(0){
 
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons(45451);
-	addr.sin_addr.S_un.S_addr = INADDR_ANY;
+	addr.sin_addr.s_addr = INADDR_ANY;
 
 	bind(sock0, (struct sockaddr *)&addr, sizeof(addr));
 
 	listen(sock0, 5);
-	gamedecon = std::thread([this]{
-		while(end){
-			Games.remove_if([](std::shared_ptr<Game> game){return game->ended; });
-		}
-
-							});
 }
 othheloserver::~othheloserver(){
-	gamedecon.join();
 	Games.clear();
 }
 void othheloserver::Run(){
@@ -36,29 +29,31 @@ void othheloserver::Run(){
 		len = sizeof(client);
 		sock = accept(sock0, (struct sockaddr *)&client, &len);
 		thread = std::thread([this]{
+			SOCKET thsock=sock;
 			char data[1024] = {0};
 			std::string ret;
-			recv(sock, data, 1024, 0);
+			recv(thsock, data, 1024, 0);
 			ret = data;
 			std::vector<std::string> temp = spritstring(ret);
 			if(!temp[0].compare("ROOM")){
-				Games.emplace_back(new Game(sock, std::stoi(temp[1]), std::stoi(temp[2])));
+				Games.emplace_back(new Game(thsock, std::stoi(temp[1]), std::stoi(temp[2])));
 			} else if(!temp[0].compare("LOGIN")){
 				for(std::shared_ptr<Game> game : Games){
 					if(!game->room.compare(temp[1])){
 						if(temp.size() > 2 && !temp[2].compare("PASSWORD")){
-							game->login(&sock, temp[3]);
+							game->login(&thsock, temp[3]);
 						} else{
-							game->login(&sock);
+							game->login(&thsock);
 						}
 					} else{
 						std::string req = "FAILED";
-						send(sock, req.c_str(), req.length() + 1, 0);
-						close(sock);
+						send(thsock, req.c_str(), req.length() + 1, 0);
+						close(thsock);
 					}
 				}
 			}});
 		thread.detach();
+		Games.remove_if([](std::shared_ptr<Game> game){return game->ended; });
 	}
 }
 #else
@@ -80,15 +75,9 @@ othheloserver::othheloserver(): connected(0),end(0){
 	if(listen(sock0, 5) != 0){
 		printf("listen : %d\n", WSAGetLastError());
 	}
-	gamedecon = std::thread([this]{
-		while(end){
-			Games.remove_if([](std::shared_ptr<Game> game){return game->ended; });
-		}
-
-							});
 }
+
 othheloserver::~othheloserver(){
-	gamedecon.join();
 	Games.clear();
 	WSACleanup();
 }
@@ -125,6 +114,7 @@ void othheloserver::Run(){
 				}
 			}});
 		thread.detach();
+		Games.remove_if([](std::shared_ptr<Game> game){return game->ended; });
 	}
 }
 

@@ -4,7 +4,7 @@
 #include <sstream>
 #include <vector>
 
-Game::Game(SOCKET connection, int w, int h): host(connection), islocked(0), guest(INVALID_SOCKET), x(w), y(h),ended(0){
+Game::Game(SOCKET connection, int w, int h): host(connection), islocked(0), guest(-1), x(w), y(h),ended(0){
 	std::chrono::system_clock::time_point start = std::chrono::system_clock::now();
 	room = std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(start.time_since_epoch()).count());
 	std::string reply = "SUCCESS " + room;
@@ -18,7 +18,7 @@ Game::Game(SOCKET connection, int w, int h): host(connection), islocked(0), gues
 		while(1){
 			memcpy(&fds, &socks, sizeof(fd_set));
 			req.erase();
-			select(0, &fds, 0, 0, 0);
+			select(3, &fds, 0, 0, 0);
 			if(FD_ISSET(host, &fds)){
 				if(recv(host, data, 32, 0) == -1){
 					send(guest, "CLOSED", 7, 0);
@@ -61,6 +61,10 @@ Game::Game(SOCKET connection, int w, int h): host(connection), islocked(0), gues
 
 #ifdef Linux_System
 Game::~Game(){
+	ended = 1;
+	std::string req="CLOSED";
+	send(host, req.c_str(), req.length() + 1, 0);
+	send(guest, req.c_str(), req.length() + 1, 0);
 	thread.join();
 	close(host);
 	close(guest);
@@ -86,7 +90,7 @@ void Game::readyGame(){
 }
 
 void Game::login(SOCKET *sock){
-	if(!islocked){
+	if(islocked==0){
 		guest = *sock;
 		std::string reply = "SUCCESS " + std::to_string(x) + " " + std::to_string(y);
 		send(guest, reply.c_str(), reply.length() + 1, 0);
@@ -100,7 +104,7 @@ void Game::login(SOCKET *sock){
 }
 
 void Game::login(SOCKET *sock, std::string pass){
-	if(islocked && !password.compare(pass)){
+	if(islocked==1 && !password.compare(pass)){
 		guest = *sock;
 		std::string reply = "SUCCESS " + std::to_string(x) + " " + std::to_string(y);
 		send(guest, reply.c_str(), reply.length()+1, 0);
