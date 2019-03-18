@@ -26,7 +26,7 @@ class othheloserver{
 	struct sockaddr_in addr;
 	struct sockaddr_in client;
 	int end;
-	unsigned int len;
+	int len;
 	SOCKET sock;
 	std::thread thread;
 };

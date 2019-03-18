@@ -11,16 +11,16 @@ std::vector<std::string> spritstring(std::string str){
 }
 #ifdef Linux_System
 othheloserver::othheloserver():connected(0), end(0){
-	int yes=1;
+	int yes = 1;
 	sock0 = socket(AF_INET, SOCK_STREAM, 0);
-	if(sock0==-1)std::cout<<"socket error:"<<errno<<std::endl;
+	if(sock0 == -1)std::cout << "socket error:" << errno << std::endl;
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons(45451);
 	addr.sin_addr.s_addr = INADDR_ANY;
 
-	if(setsockopt(sock0, SOL_SOCKET, SO_REUSEADDR, (const char *)&yes, sizeof(yes))==-1)std::cout<<"setsockopt error:"<<errno<<std::endl;
-	if(bind(sock0, (struct sockaddr *)&addr, sizeof(addr))==-1)std::cout<<"bind error:"<<errno<<std::endl;
-	if(listen(sock0, 5)==-1)std::cout<<"listen error:"<<errno<<std::endl;
+	if(setsockopt(sock0, SOL_SOCKET, SO_REUSEADDR, (const char *)&yes, sizeof(yes)) == -1)std::cout << "setsockopt error:" << errno << std::endl;
+	if(bind(sock0, (struct sockaddr *)&addr, sizeof(addr)) == -1)std::cout << "bind error:" << errno << std::endl;
+	if(listen(sock0, 5) == -1)std::cout << "listen error:" << errno << std::endl;
 }
 othheloserver::~othheloserver(){
 	Games.clear();
@@ -29,15 +29,15 @@ void othheloserver::Run(){
 	while(1){
 		len = sizeof(client);
 		sock = accept(sock0, (struct sockaddr *)&client, &len);
-		if(sock==-1)std::cout<<"accept error:"<<errno<<std::endl;
+		if(sock == -1)std::cout << "accept error:" << errno << std::endl;
 		thread = std::thread([this]{
-			SOCKET thsock=sock;
+			SOCKET thsock = sock;
 			char data[1024] = {0};
 			std::string ret;
-			if(recv(thsock, data, 1024, 0)==-1){
-			std::cout<<"recv error"<<errno<<std::endl;
-			close(thsock);
-			return;
+			if(recv(thsock, data, 1024, 0) == -1){
+				std::cout << "recv error" << errno << std::endl;
+				close(thsock);
+				return;
 			}
 			ret = data;
 			std::vector<std::string> temp = spritstring(ret);
@@ -53,7 +53,7 @@ void othheloserver::Run(){
 						}
 					} else{
 						std::string req = "FAILED";
-						if(send(thsock, req.c_str(), req.length() + 1, 0)==-1)std::cout<<"send error:"<<errno<<std::endl;
+						if(send(thsock, req.c_str(), req.length() + 1, 0) == -1)std::cout << "send error:" << errno << std::endl;
 						close(thsock);
 					}
 				}
@@ -63,9 +63,9 @@ void othheloserver::Run(){
 	}
 }
 #else
-othheloserver::othheloserver(): connected(0),end(0){
+othheloserver::othheloserver(): connected(0), end(0){
 	WSADATA wsaData;
-	bool yes=true;
+	bool yes = true;
 	WSAStartup(MAKEWORD(2, 0), &wsaData);
 	sock0 = socket(AF_INET, SOCK_STREAM, 0);
 	if(sock0 == INVALID_SOCKET){
@@ -75,7 +75,7 @@ othheloserver::othheloserver(): connected(0),end(0){
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons(45451);
 	addr.sin_addr.S_un.S_addr = INADDR_ANY;
-	setsockopt(sock0,SOL_SOCKET, SO_REUSEADDR, (const char *)&yes, sizeof(yes));
+	setsockopt(sock0, SOL_SOCKET, SO_REUSEADDR, (const char *)&yes, sizeof(yes));
 	if(bind(sock0, (struct sockaddr *)&addr, sizeof(addr)) != 0){
 		printf("bind : %d\n", WSAGetLastError());
 	}
