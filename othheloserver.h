@@ -17,8 +17,6 @@ class othheloserver{
 	int connected;
 	std::list<std::shared_ptr<Game>> Games;
 	BIO *sock0;
-	struct sockaddr_in addr;
-	struct sockaddr_in client;
 	int end;
 	int len;
 	BIO* sock;

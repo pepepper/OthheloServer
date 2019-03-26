@@ -12,11 +12,11 @@ std::vector<std::string> spritstring(std::string str){
 othheloserver::othheloserver():connected(0), end(0){
 	int yes = 1;
 	ERR_load_BIO_strings();
-	sock0=BIO_new_accept(45451);
+	sock0=BIO_new_accept("45451");
 	if(BIO_do_accept(sock0)<=0){
 		std::cerr<<"accept error";
 		ERR_print_errors_fp(stderr);
-		return -1;
+		return;
 	}
 }
 othheloserver::~othheloserver(){
@@ -28,7 +28,7 @@ void othheloserver::Run(){
 		if(BIO_do_accept(sock0)<=0){
 			std::cerr<<"accept error";
 			ERR_print_errors_fp(stderr);
-			return -1;
+			return;
 		}
 		sock=BIO_pop(sock0);
 		thread = std::thread([this]{
@@ -50,9 +50,9 @@ void othheloserver::Run(){
 				for(std::shared_ptr<Game> game : Games){
 					if(!game->room.compare(temp[1])){
 						if(temp.size() > 2 && !temp[2].compare("PASSWORD")){
-							game->login(&thsock, temp[3]);
+							game->login(thsock, temp[3]);
 						} else{
-							game->login(&thsock);
+							game->login(thsock);
 						}
 					} else{
 						std::string req = "FAILED";
@@ -60,7 +60,7 @@ void othheloserver::Run(){
 							std::cerr << "send error:" << errno << std::endl;
 							ERR_print_errors_fp(stderr);
 						}
-						close(thsock);
+						BIO_free_all(thsock);
 					}
 				}
 			}});
