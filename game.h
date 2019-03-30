@@ -7,6 +7,7 @@
 class Game{
 	public:
 	Game(BIO *connection, int w, int h);
+	Game(BIO *connection, int w, int h,std::string pass);
 	~Game();
 	void login(BIO *sock);
 	void login(BIO *sock, std::string pass);
@@ -16,6 +17,6 @@ class Game{
 	private:
 	int x, y;
 	BIO *host, *guest;
-	std::thread thread;
+	std::thread hthread,gthread;
 	std::string password;
 };
