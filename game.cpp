@@ -33,7 +33,7 @@ Game::Game(BIO *connection, int w, int h): host(connection), islocked(0), x(w), 
 	return;
 }
 
-Game::Game(BIO *connection, int w, int h,std::string pass): host(connection), islocked(1), x(w), y(h), ended(0),password(pass){
+Game::Game(BIO *connection, int w, int h, std::string pass): host(connection), islocked(1), x(w), y(h), ended(0), password(pass){
 	std::chrono::system_clock::time_point start = std::chrono::system_clock::now();
 	room = std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(start.time_since_epoch()).count());
 	std::string reply = "SUCCESS " + room;
@@ -45,9 +45,8 @@ Game::Game(BIO *connection, int w, int h,std::string pass): host(connection), is
 }
 
 Game::~Game(){
-	ended=1;
+	ended = 1;
 	hthread.join();
-	gthread.join();
 	BIO_shutdown_wr(host);
 	BIO_shutdown_wr(guest);
 	BIO_free_all(host);
@@ -58,7 +57,7 @@ void Game::readyGame(){
 	std::string reply = "READY";
 	write(host, "READY");
 	write(guest, "READY");
-		hthread = std::thread([this]{
+	hthread = std::thread([this]{
 		char data[32] = {0};
 		std::string req;
 		while(!ended){
@@ -74,13 +73,6 @@ void Game::readyGame(){
 					break;
 				}
 			}
-		}
-		ended = 1;
-						 });
-	gthread = std::thread([this]{
-		char data[32] = {0};
-		std::string req;
-		while(1){
 			if(read(guest, data, 32)){//read guest command
 				break;
 			}
@@ -88,14 +80,14 @@ void Game::readyGame(){
 			if(!req.compare("CLOSED")){//closed
 				write(host, req);
 				break;
-			}else{
+			} else{
 				if(write(host, req)){//send command to host
 					break;
 				}
 			}
 		}
 		ended = 1;
-						 });
+						  });
 	return;
 }
 

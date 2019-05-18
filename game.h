@@ -17,6 +17,6 @@ class Game{
 	private:
 	int x, y;
 	BIO *host, *guest;
-	std::thread hthread,gthread;
+	std::thread hthread;
 	std::string password;
 };
