@@ -12,3 +12,6 @@ Makefile
 OthelloServer
 cmake_install.cmake
 a.out
+/game.cpp.bak
+/othheloserver.h.bak
+/othheloserver.cpp.bak

@@ -54,7 +54,6 @@ Game::~Game(){
 }
 
 void Game::readyGame(){
-	std::string reply = "READY";
 	write(host, "READY");
 	write(guest, "READY");
 	hthread = std::thread([this]{
@@ -62,32 +61,41 @@ void Game::readyGame(){
 		std::string req;
 		while(!ended){
 			if(read(host, data, 32)){//read host command
+				write(guest, "CLOSED");
+				ended = 1;
 				break;
 			}
 			req = data;
 			if(!req.compare("CLOSED")){//closed
 				write(guest, req);
+				ended = 1;
 				break;
 			} else{
 				if(write(guest, req)){//send command to guest
+					write(host, "CLOSED");
+					ended = 1;
 					break;
 				}
 			}
 			if(read(guest, data, 32)){//read guest command
+				write(host, "CLOSED");
+				ended = 1;
 				break;
 			}
 			req = data;
 			if(!req.compare("CLOSED")){//closed
 				write(host, req);
+				ended = 1;
 				break;
 			} else{
 				if(write(host, req)){//send command to host
+					write(guest, "CLOSED");
+					ended = 1;
 					break;
 				}
 			}
 		}
-		ended = 1;
-						  });
+						 });
 	return;
 }
 
