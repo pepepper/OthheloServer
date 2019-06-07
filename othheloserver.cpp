@@ -29,10 +29,10 @@ othheloserver::~othheloserver() {
 void othheloserver::Run() {
 	endthread = std::thread([this] {
 		while (end == 0) {
-			Games.remove_if([](std::shared_ptr<Game> game) {return game->ended==1; });
-			AutoGames.remove_if([](std::shared_ptr<Game> game) {return game->ended==1; });
+			Games.remove_if([](std::shared_ptr<Game> game) {return game->ended == 1; });
+			AutoGames.remove_if([](std::shared_ptr<Game> game) {return game->ended == 1; });
 		}
-	});
+		});
 	while (end == 0) {
 		if (BIO_do_accept(sock0) <= 0) {
 			std::cerr << "accept error";
@@ -57,31 +57,34 @@ void othheloserver::Run() {
 			if (!temp[0].compare("ROOM")) {
 				if (ret.find("PASSWORD") != std::string::npos) Games.emplace_back(new Game(thsock, std::stoi(temp[1]), std::stoi(temp[2]), temp[4]));
 				else Games.emplace_back(new Game(thsock, std::stoi(temp[1]), std::stoi(temp[2])));
-			}
-			else if (!temp[0].compare("LOGIN")) {
+			} else if (!temp[0].compare("LOGIN")) {
+				int logined = 0;
 				for (std::shared_ptr<Game> game : Games) {
 					if (!game->room.compare(temp[1])) {
-						if (temp.size() > 2 && !temp[2].compare("PASSWORD"))	game->login(thsock, temp[3]);
-						else game->login(thsock);
-					}
-					else {
-						std::string req = "FAILED";
-						if (BIO_write(thsock, req.c_str(), req.length() + 1) <= 0) {
-							std::cerr << "send error:" << std::endl;
-							ERR_print_errors_fp(stderr);
+						if (temp.size() > 2 && !temp[2].compare("PASSWORD")) {
+							game->login(thsock, temp[3]);
+							logined = 1;
+						} else {
+							game->login(thsock);
+							logined = 1;
 						}
-						BIO_free_all(thsock);
 					}
 				}
-			}
-			else if (!temp[0].compare("AUTO")) {
+				if (logined == 0) {
+					std::string req = "FAILED";
+					if (BIO_write(thsock, req.c_str(), req.length() + 1) <= 0) {
+						std::cerr << "send error:" << std::endl;
+						ERR_print_errors_fp(stderr);
+					}
+					BIO_free_all(thsock);
+				}
+			} else if (!temp[0].compare("AUTO")) {
 				if (hgselect == 0) {
 					if (BIO_write(sock, "HOST", 5) <= 0) {
 						std::cerr << "send error:" << std::endl;
 						ERR_print_errors_fp(stderr);
 					}
-				}
-				else {
+				} else {
 					std::string lastroom = "GUEST " + AutoGames.back()->room;
 					if (BIO_write(sock, lastroom.c_str(), lastroom.length() + 1) <= 0) {
 						std::cerr << "send error:" << std::endl;
@@ -97,34 +100,38 @@ void othheloserver::Run() {
 				ret = data;
 				temp = spritstring(ret);
 				if (!temp[0].compare("ROOM")) {
-					AutoGames.emplace_back(new Game(thsock, std::stoi(temp[1]), std::stoi(temp[2])));
-				}
-				else if (!temp[0].compare("LOGIN")) {
-					for (std::shared_ptr<Game> game : AutoGames) {
+					Games.emplace_back(new Game(sock, std::stoi(temp[1]), std::stoi(temp[2])));
+					hgselect = !hgselect;
+					return;
+				} else if (!temp[0].compare("LOGIN")) {
+					int logined = 0;
+					for (std::shared_ptr<Game> game : Games) {
 						if (!game->room.compare(temp[1])) {
-							game->login(thsock);
-						}
-						else {
-							std::string req = "FAILED";
-							if (BIO_write(thsock, req.c_str(), req.length() + 1) <= 0) {
-								std::cerr << "send error:" << std::endl;
-								ERR_print_errors_fp(stderr);
-							}
-							BIO_free_all(thsock);
+							game->login(sock);
+							logined = 1;
+							break;
 						}
 					}
+					if (logined == 0) {
+						std::string req = "FAILED";
+						if (BIO_write(sock, req.c_str(), req.length() + 1) <= 0) {
+							std::cerr << "send error:" << std::endl;
+							ERR_print_errors_fp(stderr);
+						}
+						BIO_free_all(sock);
+						return;
+					}
+					hgselect = !hgselect;
+				} else {
+					std::string req = "FAILED";
+					if (BIO_write(sock, req.c_str(), req.length() + 1) <= 0) {
+						std::cerr << "send error:" << std::endl;
+						ERR_print_errors_fp(stderr);
+					}
+					BIO_free_all(sock);
 				}
-				hgselect = !hgselect;
 			}
-			else {
-				std::string req = "FAILED";
-				if (BIO_write(thsock, req.c_str(), req.length() + 1) <= 0) {
-					std::cerr << "send error:" << std::endl;
-					ERR_print_errors_fp(stderr);
-				}
-				BIO_free_all(thsock);
-			}
-		});
+			});
 		thread.detach();
 
 	}
