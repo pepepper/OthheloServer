@@ -27,6 +27,7 @@ Game::Game(BIO *connection, int w, int h): host(connection), islocked(0), x(w), 
 	room = std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(start.time_since_epoch()).count());
 	std::string reply = "SUCCESS " + room;
 	if(write(host, reply)){
+		BIO_shutdown_wr(host);
 		BIO_free_all(host);
 		ended = 1;
 	}
@@ -38,6 +39,7 @@ Game::Game(BIO *connection, int w, int h, std::string pass): host(connection), i
 	room = std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(start.time_since_epoch()).count());
 	std::string reply = "SUCCESS " + room;
 	if(write(host, reply)){
+		BIO_shutdown_wr(host);
 		BIO_free_all(host);
 		ended = 1;
 	}
@@ -104,6 +106,7 @@ void Game::login(BIO *sock){
 		guest = sock;
 		std::string reply = "SUCCESS " + std::to_string(x) + " " + std::to_string(y);
 		if(write(guest, reply)){
+			BIO_shutdown_wr(guest);
 			BIO_free_all(guest);
 			return;
 		}
@@ -111,6 +114,7 @@ void Game::login(BIO *sock){
 	} else{
 		std::string reply = "FAILED";
 		if(write(sock, reply)){
+			BIO_shutdown_wr(guest);
 			BIO_free_all(sock);
 		}
 	}
@@ -122,6 +126,7 @@ void Game::login(BIO *sock, std::string pass){
 		guest = sock;
 		std::string reply = "SUCCESS " + std::to_string(x) + " " + std::to_string(y);
 		if(write(guest, reply)){
+			BIO_shutdown_wr(guest);
 			BIO_free_all(guest);
 			return;
 		}
@@ -129,6 +134,7 @@ void Game::login(BIO *sock, std::string pass){
 	} else{
 		std::string reply = "FAILED";
 		if(write(sock, reply)){
+			BIO_shutdown_wr(guest);
 			BIO_free_all(sock);
 		}
 	}

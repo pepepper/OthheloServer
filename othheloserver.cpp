@@ -40,7 +40,6 @@ void othheloserver::Run() {
 			return;
 		}
 		sock = BIO_pop(sock0);
-
 		thread = std::thread([this] {
 			BIO *thsock;
 			thsock = sock;
@@ -49,6 +48,7 @@ void othheloserver::Run() {
 			if (BIO_read(thsock, data, 128) <= 0) {
 				std::cerr << "recv error" << std::endl;
 				ERR_print_errors_fp(stderr);
+				BIO_shutdown_wr(thsock);
 				BIO_free_all(thsock);
 				return;
 			}
@@ -76,17 +76,18 @@ void othheloserver::Run() {
 						std::cerr << "send error:" << std::endl;
 						ERR_print_errors_fp(stderr);
 					}
+					BIO_shutdown_wr(thsock);
 					BIO_free_all(thsock);
 				}
 			} else if (!temp[0].compare("AUTO")) {
 				if (hgselect == 0) {
-					if (BIO_write(sock, "HOST", 5) <= 0) {
+					if (BIO_write(thsock, "HOST", 5) <= 0) {
 						std::cerr << "send error:" << std::endl;
 						ERR_print_errors_fp(stderr);
 					}
 				} else {
 					std::string lastroom = "GUEST " + AutoGames.back()->room;
-					if (BIO_write(sock, lastroom.c_str(), lastroom.length() + 1) <= 0) {
+					if (BIO_write(thsock, lastroom.c_str(), lastroom.length() + 1) <= 0) {
 						std::cerr << "send error:" << std::endl;
 						ERR_print_errors_fp(stderr);
 					}
@@ -94,41 +95,43 @@ void othheloserver::Run() {
 				if (BIO_read(thsock, data, 128) <= 0) {
 					std::cerr << "recv error" << std::endl;
 					ERR_print_errors_fp(stderr);
+					BIO_shutdown_wr(thsock);
 					BIO_free_all(thsock);
 					return;
 				}
 				ret = data;
 				temp = spritstring(ret);
 				if (!temp[0].compare("ROOM")) {
-					Games.emplace_back(new Game(sock, std::stoi(temp[1]), std::stoi(temp[2])));
+					AutoGames.emplace_back(new Game(thsock, std::stoi(temp[1]), std::stoi(temp[2])));
 					hgselect = !hgselect;
 					return;
 				} else if (!temp[0].compare("LOGIN")) {
 					int logined = 0;
-					for (std::shared_ptr<Game> game : Games) {
+					for (std::shared_ptr<Game> game : AutoGames) {
 						if (!game->room.compare(temp[1])) {
-							game->login(sock);
+							game->login(thsock);
 							logined = 1;
 							break;
 						}
 					}
 					if (logined == 0) {
 						std::string req = "FAILED";
-						if (BIO_write(sock, req.c_str(), req.length() + 1) <= 0) {
+						if (BIO_write(thsock, req.c_str(), req.length() + 1) <= 0) {
 							std::cerr << "send error:" << std::endl;
 							ERR_print_errors_fp(stderr);
 						}
-						BIO_free_all(sock);
+						BIO_shutdown_wr(thsock);
+						BIO_free_all(thsock);
 						return;
 					}
 					hgselect = !hgselect;
 				} else {
 					std::string req = "FAILED";
-					if (BIO_write(sock, req.c_str(), req.length() + 1) <= 0) {
+					if (BIO_write(thsock, req.c_str(), req.length() + 1) <= 0) {
 						std::cerr << "send error:" << std::endl;
 						ERR_print_errors_fp(stderr);
 					}
-					BIO_free_all(sock);
+					BIO_free_all(thsock);
 				}
 			}
 			});
