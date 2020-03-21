@@ -1,5 +1,4 @@
 .vscode/
-SDL2-2.0.8/
 OthheloServer.vcxproj.filters
 OthheloServer.vcxproj.user
 OthheloServer/x64/
@@ -15,3 +14,6 @@ a.out
 /game.cpp.bak
 /othheloserver.h.bak
 /othheloserver.cpp.bak
+out/
+/OttheloServer.vcxproj.filters
+/OttheloServer.vcxproj.user

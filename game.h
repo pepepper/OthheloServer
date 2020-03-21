@@ -1,22 +1,31 @@
-#include <openssl/bio.h>
-#include <openssl/err.h>
+#ifdef __linux__
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+typedef SOCKET int;
+#else
+#include <winsock2.h>
+#endif
+
 #include <string.h>
 #include <thread>
 #include <string>
 #include <errno.h>  
 class Game{
 	public:
-	Game(BIO *connection, int w, int h);
-	Game(BIO *connection, int w, int h,std::string pass);
+	Game(SOCKET connection, int w, int h);
+	Game(SOCKET connection, int w, int h,std::string pass);
 	~Game();
-	void login(BIO *sock);
-	void login(BIO *sock, std::string pass);
+	void login(SOCKET sock);
+	void login(SOCKET sock, std::string pass);
 	void readyGame();
-	int islocked, ended;
+	int islocked,started, ended;
 	std::string room;
 	private:
 	int x, y;
-	BIO *host, *guest;
-	std::thread hthread;
+	SOCKET host, guest;
+	std::thread hthread,gthread;
 	std::string password;
+	int write(SOCKET con, std::string s);
+	int read(SOCKET con, char* data, int size);
 };
