@@ -9,24 +9,30 @@ std::vector<std::string> spritstring(std::string str) {
 	}
 	return ret;
 }
-othheloserver::othheloserver() :connected(0), end(0) {
+othheloserver::othheloserver() :connected(0), end(0),res(NULL) {
+	struct addrinfo hints={0};
+	struct addrinfo *ai;
+	hints.ai_family=AF_INET6;
+	hints.ai_socktype=SOCK_STREAM;
+	hints.ai_flags=AI_PASSIVE;
 #ifndef __linux__
 	if (WSAStartup(MAKEWORD(2, 0), &wsaData)) {
 		std::cout << "WSAStartup failed! aborting...";
 		return;
 	}
 #endif
-	sock0 = socket(AF_INET, SOCK_STREAM, 0);
+	int err=getaddrinfo(NULL,"45451",&hints,&res);
+	if(err){
+		printf("getaddrinfo error!:%d",err);
+	}
+	sock0 = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
 	if (sock0 == INVALID_SOCKET) {
 		printf("socket failed! aborting...\n");
 		return;
 	}
-	addr.sin_family = AF_INET;
-	addr.sin_port = htons(45451);
-	addr.sin_addr.s_addr = INADDR_ANY;
 	int yes = 1;
 	setsockopt(sock0, SOL_SOCKET, SO_REUSEADDR, (const char*)&yes, sizeof(yes));
-	if (bind(sock0, (struct sockaddr*) & addr, sizeof(addr))) {
+	if (bind(sock0, res->ai_addr, res->ai_addrlen)) {
 		printf("bind failed! aborting...\n");
 		return;
 	}
@@ -39,6 +45,7 @@ othheloserver::~othheloserver() {
 #ifndef __linux__
 	WSACleanup();
 #endif
+	freeaddrinfo(res);
 	end = 0;
 	endthread.join();
 	Games.clear();

@@ -2,7 +2,9 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-typedef SOCKET int;
+#include <unistd.h>
+typedef int SOCKET;
+#define closesocket(x) close(x)
 #else
 #include <winsock2.h>
 #endif
